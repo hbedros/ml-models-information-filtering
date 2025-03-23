@@ -1,4 +1,4 @@
-Python >= 3.8
+python
 torch
 transformers
 scikit-learn
@@ -6,3 +6,11 @@ pandas
 numpy
 nltk
 flask
+matplotlib
+seaborn
+jupyter
+flask
+mongodb
+pymongo 
+dotenv
+os
