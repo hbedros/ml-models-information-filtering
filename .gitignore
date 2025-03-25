@@ -1,4 +1,5 @@
 .env
 .vscode
 .DS_Store
-TFA_Data/
+data/
+file_structure.mkd

@@ -16,3 +16,5 @@ dotenv
 os
 kaggle
 kagglehub
+tiktoken
+gensim
