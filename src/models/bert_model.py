@@ -1,16 +1,20 @@
-# BERT.py
-
+# BERT.py (using sentence-transformers)
+import os
+os.environ["TRANSFORMERS_NO_TF"] = "1"
 import torch
-from transformers import BertTokenizer, BertModel
 import numpy as np
+import pandas as pd
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sentence_transformers import SentenceTransformer
 
 class BERTEmbedder:
-    def __init__(self, model_name='bert-base-uncased', device=None):
-        self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
-        self.tokenizer = BertTokenizer.from_pretrained(model_name)
-        self.model = BertModel.from_pretrained(model_name).to(self.device)
-        self.model.eval()
+    def __init__(self, model_name='all-MiniLM-L6-v2', device=None):
+        self.device = device or (
+            'mps' if torch.backends.mps.is_available()
+            else 'cuda' if torch.cuda.is_available()
+            else 'cpu'
+        )
+        self.model = SentenceTransformer(model_name, device=self.device)
 
     def preprocess(self, text):
         if not isinstance(text, str):
@@ -19,11 +23,15 @@ class BERTEmbedder:
 
     def embed_text(self, text):
         preprocessed = self.preprocess(text)
-        inputs = self.tokenizer(preprocessed, return_tensors='pt', truncation=True, padding=True).to(self.device)
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        cls_embedding = outputs.last_hidden_state[:, 0, :]  # CLS token
-        return cls_embedding.cpu().numpy().flatten()
+        embedding = self.model.encode(preprocessed, convert_to_numpy=True)
+        return embedding
 
-    def embed_dataframe(self, df, text_column):
-        return np.array([self.embed_text(row) for row in df[text_column]])
+    def embed_dataframe(self, df, text_column, batch_size=32):
+        texts = df[text_column].apply(self.preprocess).astype(str).tolist()
+        embeddings = self.model.encode(
+            texts,
+            batch_size=batch_size,
+            convert_to_numpy=True,
+            show_progress_bar=True
+        )
+        return np.array(embeddings)
