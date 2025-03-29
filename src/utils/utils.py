@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Add the src directory to the Python path if not already present
+src_path = os.path.abspath("/Users/haigbedros/Desktop/MSDS/Capstone/CODE/ml-models-information-filtering/src")
+if src_path not in sys.path:
+    sys.path.append(src_path)
+
 import os
 import pandas as pd
 from pymongo import MongoClient
