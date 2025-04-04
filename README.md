@@ -56,7 +56,8 @@ ml-optimization-information-filtering/
 ## Requirements  
 
 - Python >= 3.8  
-- torch  
+- pytorch
+- tenserflow  
 - transformers  
 - scikit-learn  
 - pandas  
