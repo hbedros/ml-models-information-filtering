@@ -4,6 +4,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sentence_transformers import SentenceTransformer, util
 import torch
 from PyPDF2 import PdfReader
+import numpy as np
 
 # Step 1: Preprocessing
 def preprocess_texts(texts):
@@ -24,7 +25,7 @@ def lda_topic_clustering(texts, n_topics=5):
 # Sentence-Transformers for Contextual Filtering
 def bert_contextual_filtering(texts, query, model_name="all-MiniLM-L6-v2", threshold=0.5):
     """
-    Use Sentence-Transformers to compute embeddings and filter texts based on similarity to a query.
+    Use Sentence-Transformers to compute embeddings, relevance, and similarity to a query.
     """
     # Load the model and move it to GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,14 +33,29 @@ def bert_contextual_filtering(texts, query, model_name="all-MiniLM-L6-v2", thres
     
     # Compute embeddings for the query and texts
     query_embedding = model.encode(query, convert_to_tensor=True, device=device)
-    text_embeddings = model.encode(texts, convert_to_tensor=True, device=device)
+    text_embeddings = model.encode(texts, batch_size=128, convert_to_tensor=True, device=device)
     
+    # Another way to compute text embeddings in batches
+    # text_embeddings = [] s
+    # for i in range(0, len(texts), batch_size):
+    #    batch = texts[i:i + batch_size]
+    #    batch_embeddings = model.encode(batch, convert_to_tensor=True, device=device)
+    #    text_embeddings.append(batch_embeddings)
+    # text_embeddings = torch.cat(text_embeddings, dim=0)
+
     # Compute cosine similarity
     similarities = util.cos_sim(query_embedding, text_embeddings)[0]
     
     # Filter texts based on the similarity threshold
-    results = [similarity.item() > threshold for similarity in similarities]
-    return results, similarities.cpu().numpy()
+    relevance = [similarity.item() > threshold for similarity in similarities]
+    
+    # Debugging outputs
+    print("Query Embedding Shape:", query_embedding.shape)
+    print("Text Embeddings Shape:", text_embeddings.shape)
+    print("Similarities Shape:", similarities.shape)
+
+    # Return relevance, similarity scores, and text embeddings
+    return relevance, similarities.cpu().numpy(), text_embeddings.cpu().numpy()
 
 # Function to Generate Queries
 def generate_queries_from_topics(lda_model, vectorizer, top_n=5):
@@ -66,21 +82,12 @@ def generate_queries_from_topics(lda_model, vectorizer, top_n=5):
 def pipeline(dataframe, text_column, queries=None, n_topics=5, bert_model="all-MiniLM-L6-v2", threshold=0.5, top_n_words=5):
     """
     Hybrid LDA + BERT pipeline for filtering qualitative data.
-    
-    Args:
-        dataframe: Input DataFrame.
-        text_column: Column containing the text data.
-        queries: List of queries for BERT filtering (optional).
-        n_topics: Number of topics for LDA.
-        bert_model: Pre-trained Sentence-Transformers model name.
-        threshold: Similarity threshold for BERT filtering.
-        top_n_words: Number of top words to extract for query generation.
-    
-    Returns:
-        Processed DataFrame, trained LDA model, and vectorizer.
     """
     # Preprocess the texts
     texts = preprocess_texts(dataframe[text_column])
+    
+    if not texts:
+        raise ValueError("No valid texts found in the DataFrame.")
     
     # LDA Topic Clustering
     topic_assignments, lda_model, vectorizer = lda_topic_clustering(texts, n_topics=n_topics)
@@ -91,11 +98,25 @@ def pipeline(dataframe, text_column, queries=None, n_topics=5, bert_model="all-M
         queries = generate_queries_from_topics(lda_model, vectorizer, top_n=top_n_words)
         print(f"Generated Queries from Topics: {queries}")
     
-    # Sentence-Transformers Contextual Filtering
+    if not queries:
+        raise ValueError("No queries were generated or provided.")
+    
+    # Sentence-Transformers Contextual Filtering and Embedding Generation
+    all_embeddings = []
     for query in queries:
-        relevance, similarities = bert_contextual_filtering(texts, query, model_name=bert_model, threshold=threshold)
+        relevance, similarities, embeddings = bert_contextual_filtering(texts, query, model_name=bert_model, threshold=threshold)
         dataframe[f'relevant_to_{query}'] = relevance
         dataframe[f'similarity_to_{query}'] = similarities
+        all_embeddings.append(embeddings)
+    
+    if not all_embeddings:
+        raise ValueError("No embeddings were generated. Check the queries or texts.")
+    
+    # Combine all embeddings into a single array
+    combined_embeddings = np.mean(all_embeddings, axis=0)  # Average embeddings across queries
+    embedding_columns = [f"embedding_{i}" for i in range(combined_embeddings.shape[1])]
+    for i, col in enumerate(embedding_columns):
+        dataframe[col] = combined_embeddings[:, i]
     
     return dataframe, lda_model, vectorizer
 

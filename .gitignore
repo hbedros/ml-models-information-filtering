@@ -6,3 +6,4 @@ file_structure.mkd
 **/__pycache__/
 *.py[cod]
 .ipynb_checkpoints
+*.csv
