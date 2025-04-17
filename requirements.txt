@@ -111,3 +111,10 @@ webencodings==0.5.1
 websocket-client==1.8.0
 nltk==3.8.1
 fitz==0.0.1
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+coverage>=7.2.0
+sentence-transformers>=2.2.2
+torch>=2.0.0
+PyPDF2>=3.0.0 
