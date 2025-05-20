@@ -7,3 +7,4 @@ file_structure.mkd
 *.py[cod]
 .ipynb_checkpoints
 *.csv
+notebook/test_csv
