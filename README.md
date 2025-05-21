@@ -21,32 +21,34 @@ This project evaluates and optimizes machine learning models for **information f
 
 1. Clone the repository  
    ```bash
-   git clone https://github.com/your-username/ml-optimization-information-filtering.git
-   cd ml-optimization-information-filtering
+   git clone https://github.com/haigbedros/ml-models-information-filtering-archive.git
+   cd ml-models-information-filtering-archive
    ```
 
 2. Install dependencies
-  ```bash
-  pip install -r requirements.txt
-  ```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run the model
-  ```bash
-  python src/lda_bert_filtering.py
-  ```
+   ```bash
+   python src/process_book.py
+   ```
 
 ## Repository Structure  
 
 ```
-ml-optimization-information-filtering/
+ml-models-information-filtering-archive/
 │
-├── data/                   # Sample datasets
 ├── notebooks/              # Jupyter notebooks for EDA & model evaluation
-├── src/                    # Scripts for LDA + BERT pipeline
-│   ├── lda_bert_filtering.py
-│   ├── utils.py
-│   ├── api.py              # Flask API for deployment
+├── src/                    # Source code
+│   ├── models/            # Model implementations
+│   ├── pipeline/          # Data processing pipeline
+│   ├── tokenizer/         # Text tokenization utilities
+│   ├── utils/             # Helper functions
+│   └── process_book.py    # Main processing script
 │
+├── tests/                 # Test suite
 ├── .gitignore              
 ├── LICENSE                
 ├── README.md               
@@ -56,13 +58,21 @@ ml-optimization-information-filtering/
 ## Requirements  
 
 - Python >= 3.8  
-- pytorch
-- tenserflow  
-- transformers  
-- scikit-learn  
-- pandas  
-- numpy  
-- nltk  
+- torch >= 2.0.0
+- sentence-transformers >= 2.2.2
+- scikit-learn >= 1.6.1
+- pandas >= 2.2.3
+- numpy >= 2.2.4
+- nltk >= 3.8.1
+- PyPDF2 >= 3.0.0
+- pytest >= 7.0.0 (for testing)
+
+## Testing
+
+Run the test suite using pytest:
+```bash
+pytest
+```
 
 ## License  
 
